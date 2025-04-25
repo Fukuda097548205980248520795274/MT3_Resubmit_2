@@ -97,6 +97,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		ImGui::Begin("Window1");
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &cameraRotate.x, 0.01f);
+		ImGui::DragFloat("Length", &conicalPendulum.length, 0.01f);
+		ImGui::DragFloat("HalfApexLength" , &conicalPendulum.halfApexAngle , 0.01f);
 
 		if (isPendulumShake == false)
 		{
