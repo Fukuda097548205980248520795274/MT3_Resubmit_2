@@ -26,6 +26,9 @@
     <Filter Include="Func\Draw">
       <UniqueIdentifier>{b53b84e7-6edb-45c9-a9ba-b222a778d022}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Func\Hits">
+      <UniqueIdentifier>{999101fc-728b-4157-82fa-348a557dc62f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="C:\KamataEngine\DirectXGame\base\DirectXCommon.cpp">
@@ -58,6 +61,9 @@
     </ClCompile>
     <ClCompile Include="Func\Draw\Draw.cpp">
       <Filter>Func\Draw</Filter>
+    </ClCompile>
+    <ClCompile Include="Func\Hits\Hits.cpp">
+      <Filter>Func\Hits</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="Func\Draw\Draw.h">
       <Filter>Func\Draw</Filter>
+    </ClInclude>
+    <ClInclude Include="Func\Hits\Hits.h">
+      <Filter>Func\Hits</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -4,6 +4,7 @@
 #include "./Func/Vector/Vector.h"
 #include "./Func/Matrix/Matrix.h"
 #include "./Func/Draw/Draw.h"
+#include "./Func/Hits/Hits.h"
 #include "imgui.h"
 
 const char kWindowTitle[] = "LE2A_11_フクダソウワ_MT3";
@@ -28,13 +29,33 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Vector3 cameraTranslate = { 0.0f , 1.9f , -6.49f };
 	Vector3 cameraRotate = { 0.26f , 0.0f , 0.0f };
 
-	// 線分
-	Segment segment;
-	segment.origin = { -2.0f , -1.0f , 0.0f };
-	segment.diff = { 3.0f , 2.0f , 2.0f };
+	// カーソルの位置を取得する変数
+	int getCursorPointX = 0;
+	int getCursorPointY = 0;
 
-	// 点
-	Vector3 point = { -1.5f , 0.6f , 0.6f };
+	// カーソルの始点
+	Vector2 cursorOrigin = { 0.0f , 0.0f };
+
+	// カーソルの終点
+	Vector2 cursorDiff = { 0.0f , 0.0f };
+
+	// カーソルによる回転量
+	Vector2 cursorRotate = { 0.0f , 0.0f };
+
+	// カーソルによる総回転量
+	Vector2 cursorRotateSum = { 0.0f , 0.0f };
+
+
+	// 球1
+	Sphere s1;
+	s1.center = { 0.0f , 0.0f , 0.0f };
+	s1.radius = 0.3f;
+
+	// 球2
+	Sphere s2;
+	s2.center = { 0.5f , 0.5f , 0.0f };
+	s2.radius = 0.2f;
+
 
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -54,21 +75,45 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("point", &point.x, 0.01f);
-		ImGui::DragFloat3("segmentOrigin", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("segmentDiff", &segment.diff.x, 0.01f);
+		ImGui::DragFloat3("sphere1Center", &s1.center.x, 0.01f);
+		ImGui::DragFloat("sphere1Radius", &s1.radius, 0.01f);
+		ImGui::DragFloat3("sphere2Center", &s2.center.x, 0.01f);
+		ImGui::DragFloat("sphere2Radius", &s2.radius, 0.01f);
 		ImGui::End();
 
 
-		// 正射影ベクトル
-		Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
+		/*----------------
+			カメラ操作
+		----------------*/
 
-		// 最近接点
-		Vector3 closestPoint = ClosestPoint(project, segment);
+		// Shiftキーを押しながら、マウスの左を押し続けて、スクロールする
+		if (keys[DIK_RSHIFT] || keys[DIK_LSHIFT])
+		{
+			if (Novice::IsPressMouse(0))
+			{
+				// 押した瞬間のカーソルの始点を取得する
+				if (Novice::IsTriggerMouse(0))
+				{
+					Novice::GetMousePosition(&getCursorPointX, &getCursorPointY);
+					cursorOrigin = { static_cast<float>(getCursorPointX) , static_cast<float>(getCursorPointY) };
 
+					// カメラの回転量を記録する
+					cursorRotateSum = { cameraRotate.x , cameraRotate.y };
+				}
 
-		Sphere pointSphere = { point , 0.01f };
-		Sphere closestSphere = { closestPoint , 0.01f };
+				// カーソルの終点を取得する
+				Novice::GetMousePosition(&getCursorPointX, &getCursorPointY);
+				cursorDiff = { static_cast<float>(getCursorPointX) - cursorOrigin.x , static_cast<float>(getCursorPointY) - cursorOrigin.y };
+
+				// 今のカーソルでの回転量を求める
+				cursorRotate.y = cursorDiff.x / 1000.0f;
+				cursorRotate.x = cursorDiff.y / 1000.0f;
+
+				// 記録した回転量と、今の回転量を加算する
+				cameraRotate.x = cursorRotate.x + cursorRotateSum.x;
+				cameraRotate.y = cursorRotate.y + cursorRotateSum.y;
+			}
+		}
 
 
 		/*-------------------
@@ -85,10 +130,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight), 0.0f, 1.0f);
 
 
-		Vector3 start = Transform(Transform(segment.origin, Multiply(viewMatrix, projectionMatrix)), viewportMatrix);
-		Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), Multiply(viewMatrix, projectionMatrix)), viewportMatrix);
-
-
 		///
 		/// ↑更新処理ここまで
 		///
@@ -97,17 +138,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		/// ↓描画処理ここから
 		///
 
+		// グリッド
 		DrawGrid(Multiply(viewMatrix, projectionMatrix), viewportMatrix);
 
-		DrawSphere(pointSphere, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0xFF0000FF);
-		DrawSphere(closestSphere, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0x000000FF);
+		// 球2
+		DrawSphere(s2, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0xFFFFFFFF);
 
-		Novice::DrawLine
-		(
-			static_cast<int>(start.x), static_cast<int>(start.y),
-			static_cast<int>(end.x), static_cast<int>(end.y),
-			0xFFFFFFFF
-		);
+
+		// 球が触れたら（衝突フラグがtrue）、色を赤くする
+		if (IsCollision(s1, s2))
+		{
+			DrawSphere(s1, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0xFF0000FF);
+		} else
+		{
+			// 当たっていないとき（衝突フラグがfalse）は、白くする
+			DrawSphere(s1, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0xFFFFFFFF);
+		}
 
 		///
 		/// ↑描画処理ここまで
