@@ -46,10 +46,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Vector2 cursorRotateSum = { 0.0f , 0.0f };
 
 
-	// 球
-	Sphere sphere;
-	sphere.center = { 0.0f , 0.0f , 0.0f };
-	sphere.radius = 0.3f;
+	// 線分
+	Segment segment;
+	segment.origin = { -0.5f , -0.5f , 0.0f };
+	segment.diff = { 1.0f , 1.0f , 0.0f };
 
 	// 平面
 	Plane plane;
@@ -75,10 +75,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("sphere1Center", &sphere.center.x, 0.01f);
-		ImGui::DragFloat("sphere1Radius", &sphere.radius, 0.01f);
 		ImGui::DragFloat3("planeNormal", &plane.normal.x, 0.01f);
 		ImGui::DragFloat("planeDistance", &plane.distance, 0.01f);
+		ImGui::DragFloat3("segmentOrigin", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("segmentDiff", &segment.diff.x, 0.01f);
 		ImGui::End();
 
 
@@ -120,6 +120,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		}
 
 
+
+
+
+
 		/*-------------------
 			座標変換の行列
 		-------------------*/
@@ -149,15 +153,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		DrawPlane(plane, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0xFFFFFFFF);
 
 
-		// 当たったら（衝突フラグがtrue）は、赤くする
-		if (IsCollision(sphere, plane))
+		// 衝突したら（衝突フラグがtrue）、線分が赤くなる
+		if (IsCollision(segment, plane))
 		{
-			DrawSphere(sphere, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0xFF0000FF);
+			DrawSegment(segment, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0xFF0000FF);
 		} else
 		{
-			// 当たっていないとき（衝突フラグがfalse）は、白くする
-			DrawSphere(sphere, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0xFFFFFFFF);
+			// 衝突していないときは（衝突フラグがfalse）、線分が白くなる
+			DrawSegment(segment, Multiply(viewMatrix, projectionMatrix), viewportMatrix, 0xFFFFFFFF);
 		}
+
 
 		///
 		/// ↑描画処理ここまで
